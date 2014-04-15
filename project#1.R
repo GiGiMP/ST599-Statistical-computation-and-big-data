@@ -76,7 +76,7 @@ hist(pdc_df$WAGP)
 # group by type of transport and summarise
 trans_type <- group_by(pdc_df, JWTR)
 Income_type <- group_by(pdc_df, function(WAGP))
-
+# shangjia
 time_summary <- summarise(trans_type, 
                           transport_type = first(transport_type),
                           avg_time = mean(JWMNP, na.rm = TRUE),
