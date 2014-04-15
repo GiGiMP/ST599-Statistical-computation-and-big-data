@@ -18,7 +18,7 @@ ny_sm <- read.csv(unz("data/csv_pny.zip", "ss12pny.csv"), nrows = 10,  # notice 
 str(ny_sm)
 
 which(names(ny_sm)%in%c("JWMNP", "JWRIP", "JWTR", "SEMP", "SSIP", "SSP", "WAGP","PERNP","PINCP", "PUMA10", "PUMA00"))
-# got these results for the columns: 35  36  37  71  73  74  75 111 112 5
+# got these results for the columns: 35  36  37  71  73  74  75 111 112 5 4
 # cut out columns using a command line tool - did you do last week's readings?
 
 system.time(system("cut -d, -f4,5,35,36,37,71,73,74,75,111,112 data/ss12pny.csv > data/ss12pny-cut.csv"))
@@ -49,13 +49,18 @@ dc_df<-tbl_df(dc4)
 head(ny_df)
 #need a for loop to select all the PUMAS and merge
 #select the PUMA, 
-rm(ny.pums00)
-?merge
-x <- (3710:4114)
-?rbind
-rbind(nyc.x[i]for(i in seq(x)){nyc.x[i]<-filter(ny_df,PUMA00=="x[i]"|PUMA10=="x[i]")}
-      
-nyc.3710<-filter(ny_df,PUMA00 =="3710"|PUMA10=="3710")
+library(dplyr)
+library(ggplot2)
+head(ny_df)
 
+nyc.38XX=data.frame()
+for(i in 3801:3810){
+  nyc.38XX<-rbind(nyc.38XX,filter(ny_df,PUMA00 ==i|PUMA10==i ))
+}
+head(nyc.38XX)
+manhat<-nyc.38XX
+manhat <- mutate(manhat, Income=SSIP+SSP+WAGP)
 
+boxplot(Income ~ JWTR, data=manhat)
+ggplot(manhat,aes(JWTR,Income)) + geom_boxplot()
 head(ny.pums)
