@@ -58,18 +58,18 @@ for(i in 3801:3810){
 head(manhat)
 manhat <- mutate(manhat, Income=SSIP+SSP+WAGP)
 #need to convert numeric codes to words
-JWTR_codes <- c("1" = "Car, truck, or van",
-                "2" = "Bus or trolley bus",
-                "3" = "Streetcar or trolley car",
-                "4" = "Subway or elevated",
+JWTR_codes <- c("1" = "Car/truck",
+                "2" = "Bus",
+                "3" = "Streetcar",
+                "4" = "Subway",
                 "5" = "Railroad",
                 "6" = "Ferryboat",
                 "7" = "Taxicab",
                 "8" = "Motorcycle",
                 "9" = "Bicycle",
                 "10" = "Walked",
-                "11" = "Worked at home",
-                "12" = "Other method")
+                "11" = "Work at home",
+                "12" = "Other")
 manhat<- mutate(manhat, trans_type = JWTR_codes[as.character(JWTR)])
 summarise(manhat, mean(is.na(Income)), mean(Income == 0, na.rm = TRUE))
 #in manhattan, 11.8% is missing, 21.8% is 0
@@ -155,7 +155,55 @@ summarise(nyc.trans, median(Income),
           n())
 
 dc.trans<-group_by(dc, trans_type)
+
 summarise(dc.trans, median(Income),
           n())
-#should remove ferry as there is only one repsonse for ferry in DC. 
-          
+#now order these in decreasing order and without ferryboat
+#NYC
+nyc.nof<-filter(nyc, trans_type!="Ferryboat", Income!=0)
+nyc.noft<-group_by(nyc.nof, trans_type)
+nyc.s<-summarise(nyc.noft, log10(mean(Income)),
+          n())
+
+nyc.s <- nyc.s[order(nyc.s[,"log10(mean(Income))"],decreasing=T),]
+#DC
+dc.nof<-filter(dc, trans_type!="Ferryboat", Income!=0)
+dc.noft<-group_by(dc.nof, trans_type)
+dc.s<-summarise(dc.noft, log10(mean(Income)),
+                n())
+dc.s<- dc.s[order(dc.s[,"log10(mean(Income))"], decreasing=T),]
+nyc.s
+dc.s
+ 
+ggplot(dat, aes(trans_type,Income, na.rm=TRUE)))+
+  geom_violin(data=filter(dat,city=="DC"),color="blue", fill="blue", alpha=I(0.2))+
+  geom_violin(data=filter(dat,city=="NYC"), color="red", fill="red", alpha=I(0.2))
+
+
+n<-ggplot(dc.nof, aes(trans_type,Income, na.rm=TRUE))
+big_font<-theme_gray(base_size=18)
+n+geom_violin(color="blue", fill="blue", alpha=I(0.2)) +
+  big_font + scale_fill_manual(values=c("red", "blue")) +
+  geom_violin(aes(trans_type,Income),
+              data=nyc.nof, color="red", fill="red", alpha=I(0.2)) +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_text(color="black"),
+        axis.text.y=element_text(color="black")) +
+    scale_x_discrete(limits = nyc.s$trans_type) +
+     scale_y_log10(breaks=c(100,1000,10000,100000,1000000), limits=(c(100,1000000))) + 
+  ggtitle("Comparing NYC and DC Income by Various Transportation Types") 
+
+
+# Below represents a lot of work that didn't go anywhere...can't figure out how to control
+# alpha so colors aren't so hideous (ouline of the violin plots really helps in the overlaid 
+# graphs vs. combined data set graph below). I'm leaving this in incase anyone has an aha and
+#figures it out!
+
+dat = rbind(nyc.nof,dc.nof)
+ggplot(dat,aes(x=trans_type,y= Income,fill=city),na.rm=TRUE) +
+  geom_violin(position="identity", alpha=(.2))+
+  scale_line_manual(values=c("red", "blue"), alpha=(1)) +
+  scale_fill_manual(values=c("red", "blue")) + 
+  scale_x_discrete(limits = nyc.s$trans_type) +
+  scale_y_log10() 
+
